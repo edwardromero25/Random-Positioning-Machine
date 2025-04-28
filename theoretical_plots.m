@@ -22,8 +22,8 @@ function theoretical_plots()
     omega_beta_rpm = omega_beta * 30 / pi;
 
     figure;
-    plot(time_array, omega_alpha_rpm, ...
-         time_array, omega_beta_rpm);
+    plot(time_in_hours, omega_alpha_rpm, ...
+         time_in_hours, omega_beta_rpm);
     title("Angular Velocity vs. Time", 'FontWeight', 'normal');
     xlabel("Time (h)");
     ylabel("Angular Velocity (rpm)");
