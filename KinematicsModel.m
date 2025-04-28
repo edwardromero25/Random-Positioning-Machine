@@ -33,8 +33,7 @@ classdef KinematicsModel
             time_array = 0:dt:(obj.duration_hours * 3600);  
             random_positioning_machine_profile = zeros(size(time_array));  
             
-            current_rpm = (obj.omega_rpm_max - obj.omega_rpm_min) * rand() + obj.omega_rpm_min;  
-            current_rpm = current_rpm * (2 * randi([0 1]) - 1);  
+            current_rpm = 0; 
             random_positioning_machine_profile(1) = current_rpm;  
             
             i = 2;  
