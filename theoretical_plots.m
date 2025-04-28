@@ -4,24 +4,30 @@ function theoretical_plots()
     set(0, 'DefaultAxesFontWeight', 'normal');
     set(0, 'DefaultTextFontWeight', 'normal');
 
-    f = 50; % hz
+    f = 500; % hz
     angular_velocity_min = 10; % rpm
     angular_velocity_max = 20; % rpm
-    angular_acceleration = 30; % deg/s^2
     outer_initial_angular_position = 0; % deg
     inner_initial_angular_position = 0; % deg
     distance_from_center = 0; % cm
-    simulation_duration = 1; % h
-    start_analysis = 0; % h
-    end_analysis = simulation_duration; % h
+    simulation_duration = 0.1; % h
 
-    model = KinematicsModel(f, angular_velocity_min, angular_velocity_max, angular_acceleration, ...
+    model = KinematicsModel(f, angular_velocity_min, angular_velocity_max, ...
         outer_initial_angular_position, inner_initial_angular_position, ...
         distance_from_center, distance_from_center, distance_from_center, simulation_duration);
-    [time_array, g_local_2, a_local_2, a_tot_local_2] = model.calculate_acceleration();
+    [time_array, omega_alpha, omega_beta, g_local_2, a_local_2, a_tot_local_2] = model.calculate_acceleration();
     time_in_hours = time_array / 3600;
-    [~, start_idx] = min(abs(time_in_hours - start_analysis));
-    [~, end_idx] = min(abs(time_in_hours - end_analysis));
+    
+    omega_alpha_rpm = omega_alpha * 30 / pi;
+    omega_beta_rpm = omega_beta * 30 / pi;
+
+    figure;
+    plot(time_in_hours, omega_alpha_rpm, ...
+         time_in_hours, omega_beta_rpm);
+    title("Angular Velocity vs. Time", 'FontWeight', 'normal');
+    xlabel("Time (h)");
+    ylabel("Angular Velocity (rpm)");
+    legend("Outer", "Inner");
 
     g_x_avg = cumsum(g_local_2(1,:)) ./ (1:length(g_local_2(1,:)));
     g_y_avg = cumsum(g_local_2(2,:)) ./ (1:length(g_local_2(2,:)));
@@ -30,20 +36,10 @@ function theoretical_plots()
     
     magnitude = mean(g_magnitude_avg);
     magnitude_label = sprintf('Magnitude: %.3g', magnitude);
-    %{
-    magnitude_analysis = mean(g_magnitude_avg(start_idx:end_idx));
-    magnitude_analysis_label = sprintf('Magnitude: %.3g', magnitude_analysis);
-    %}
 
     figure;
     hold on;
     plot(time_in_hours, g_magnitude_avg, 'b', 'DisplayName', magnitude_label);
-    %{
-    plot(time_in_hours(start_idx:end_idx), g_magnitude_avg(start_idx:end_idx), ...
-        'r', 'LineWidth', 1.5, 'DisplayName', magnitude_analysis_label);
-    xline(time_in_hours(start_idx), 'r--', 'LineWidth', 1, 'HandleVisibility', 'off');
-    xline(time_in_hours(end_idx), 'r--', 'LineWidth', 1, 'HandleVisibility', 'off');
-    %}
     title("Time-Averaged Gravitational Acceleration", 'FontWeight', 'normal');
     xlabel("Time (h)");
     ylabel("Acceleration (g)");
@@ -65,20 +61,10 @@ function theoretical_plots()
 
     magnitude = mean(a_magnitude_avg);
     magnitude_label = sprintf('Magnitude: %.3g', magnitude);
-    %{
-    magnitude_analysis = mean(a_magnitude_avg(start_idx:end_idx));
-    magnitude_analysis_label = sprintf('Magnitude: %.3g', magnitude_analysis);
-    %}
 
     figure;
     hold on;
     plot(time_in_hours, a_magnitude_avg, 'b', 'DisplayName', magnitude_label);
-    %{
-    plot(time_in_hours(start_idx:end_idx), a_magnitude_avg(start_idx:end_idx), ...
-        'r', 'LineWidth', 1.5, 'DisplayName', magnitude_analysis_label);
-    xline(time_in_hours(start_idx), 'r--', 'LineWidth', 1, 'HandleVisibility', 'off');
-    xline(time_in_hours(end_idx), 'r--', 'LineWidth', 1, 'HandleVisibility', 'off');
-    %}
     title("Time-Averaged Non-Gravitational Acceleration", 'FontWeight', 'normal');
     xlabel("Time (h)");
     ylabel("Acceleration (g)");
@@ -121,13 +107,6 @@ function theoretical_plots()
     axis equal;
     hold off;
 
-    subset_x = a_tot_local_2(1, start_idx:end_idx);
-    subset_y = a_tot_local_2(2, start_idx:end_idx);
-    subset_z = a_tot_local_2(3, start_idx:end_idx);
-    
-    distribution_analysis = FibonacciLattice("theoretical", subset_x, subset_y, subset_z).getDistribution();
-    distribution_analysis_label = sprintf('Distribution: %d', distribution_analysis);
-
     figure;
     hold on;
     title("Orientation Distribution", 'FontWeight', 'normal');
@@ -151,11 +130,11 @@ function theoretical_plots()
     mesh(x, y, z, 'EdgeColor', [0.5 0.5 0.5], ...
          'FaceAlpha', 0, 'EdgeAlpha', 0.5, 'HandleVisibility', 'off');
     animated_line = plot3(NaN, NaN, NaN, 'r', 'LineWidth', 1, ...
-                          'DisplayName', distribution_analysis_label);
-    for k = 1:5:length(subset_x)
-        set(animated_line, 'XData', subset_x(1:k), ...
-                           'YData', subset_y(1:k), ...
-                           'ZData', subset_z(1:k));
+                          'DisplayName', distribution_label);
+    for k = 1:25:length(a_tot_local_2)
+        set(animated_line, 'XData', a_tot_local_2(1,1:k), ...
+                           'YData', a_tot_local_2(2,1:k), ...
+                           'ZData', a_tot_local_2(3,1:k));
         drawnow;
     end
     hold off;
