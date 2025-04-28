@@ -3,7 +3,6 @@ classdef KinematicsModel
         f_hz
         omega_rpm_min
         omega_rpm_max
-        delta_omega_deg_per_s2
         alpha_0_deg
         beta_0_deg
         x_cm
@@ -13,11 +12,10 @@ classdef KinematicsModel
     end
 
     methods
-        function obj = KinematicsModel(f_hz, omega_rpm_min, omega_rpm_max, delta_omega_deg_per_s2, alpha_0_deg, beta_0_deg, x_cm, y_cm, z_cm, duration_hours)
+        function obj = KinematicsModel(f_hz, omega_rpm_min, omega_rpm_max, alpha_0_deg, beta_0_deg, x_cm, y_cm, z_cm, duration_hours)
             obj.f_hz = f_hz;
             obj.omega_rpm_min = omega_rpm_min;
             obj.omega_rpm_max = omega_rpm_max;
-            obj.delta_omega_deg_per_s2 = delta_omega_deg_per_s2;
             obj.alpha_0_deg = alpha_0_deg;
             obj.beta_0_deg = beta_0_deg;
             obj.x_cm = x_cm;
@@ -30,23 +28,31 @@ classdef KinematicsModel
             dt = 1 / obj.f_hz;  
             time_array = 0:dt:(obj.duration_hours * 3600);  
             random_positioning_machine_profile = zeros(size(time_array));  
+            
             current_rpm = (obj.omega_rpm_max - obj.omega_rpm_min) * rand() + obj.omega_rpm_min;  
             current_rpm = current_rpm * (2 * randi([0 1]) - 1);  
             random_positioning_machine_profile(1) = current_rpm;  
-        
+            
             i = 2;  
             while i <= length(time_array) 
                 target_rpm = (obj.omega_rpm_max - obj.omega_rpm_min) * rand() + obj.omega_rpm_min;  
                 target_rpm = target_rpm * (2 * randi([0 1]) - 1); 
-                delta_rpm = target_rpm - current_rpm;  
-                delta_omega_rpm_per_s = obj.delta_omega_deg_per_s2 / 6;  
-                t_transition = abs(delta_rpm) / delta_omega_rpm_per_s;  
-                steps = floor(t_transition / dt);  
-                ramp = linspace(current_rpm, target_rpm, steps); 
-                idx_end = min(i + steps - 1, length(random_positioning_machine_profile)); 
-                random_positioning_machine_profile(i:idx_end) = ramp(1:(idx_end - i + 1));  
-                current_rpm = target_rpm;  
-                i = idx_end + 1;  
+                
+                t_transition = 1;  
+                steps_ramp = floor(t_transition / dt);
+                
+                t_hold = 4;
+                steps_hold = floor(t_hold / dt);
+        
+                idx_end_ramp = min(i + steps_ramp - 1, length(random_positioning_machine_profile));
+                ramp = linspace(current_rpm, target_rpm, idx_end_ramp - i + 1);
+                random_positioning_machine_profile(i:idx_end_ramp) = ramp;
+       
+                idx_end_hold = min(idx_end_ramp + steps_hold, length(random_positioning_machine_profile));
+                random_positioning_machine_profile((idx_end_ramp+1):idx_end_hold) = target_rpm;
+                
+                current_rpm = target_rpm;
+                i = idx_end_hold + 1;
             end
         end
 
@@ -58,7 +64,7 @@ classdef KinematicsModel
             rad = deg2rad(degrees);
         end
 
-        function [time_array, g_local_2, a_local_2, a_tot_local_2] = calculate_acceleration(obj)
+        function [time_array, omega_alpha, omega_beta, g_local_2, a_local_2, a_tot_local_2] = calculate_acceleration(obj)
             dt = 1 / obj.f_hz;
             time_array = 0:dt:(obj.duration_hours * 3600);
 
