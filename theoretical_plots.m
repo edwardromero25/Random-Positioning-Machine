@@ -1,0 +1,162 @@
+function theoretical_plots()
+    set(0, 'DefaultAxesFontName', 'Raleway');
+    set(0, 'DefaultTextFontName', 'Raleway');
+    set(0, 'DefaultAxesFontWeight', 'normal');
+    set(0, 'DefaultTextFontWeight', 'normal');
+
+    f = 50; % hz
+    angular_velocity_min = 10; % rpm
+    angular_velocity_max = 20; % rpm
+    angular_acceleration = 30; % deg/s^2
+    outer_initial_angular_position = 0; % deg
+    inner_initial_angular_position = 0; % deg
+    distance_from_center = 0; % cm
+    simulation_duration = 1; % h
+    start_analysis = 0; % h
+    end_analysis = simulation_duration; % h
+
+    model = KinematicsModel(f, angular_velocity_min, angular_velocity_max, angular_acceleration, ...
+        outer_initial_angular_position, inner_initial_angular_position, ...
+        distance_from_center, distance_from_center, distance_from_center, simulation_duration);
+    [time_array, g_local_2, a_local_2, a_tot_local_2] = model.calculate_acceleration();
+    time_in_hours = time_array / 3600;
+    [~, start_idx] = min(abs(time_in_hours - start_analysis));
+    [~, end_idx] = min(abs(time_in_hours - end_analysis));
+
+    g_x_avg = cumsum(g_local_2(1,:)) ./ (1:length(g_local_2(1,:)));
+    g_y_avg = cumsum(g_local_2(2,:)) ./ (1:length(g_local_2(2,:)));
+    g_z_avg = cumsum(g_local_2(3,:)) ./ (1:length(g_local_2(3,:)));
+    g_magnitude_avg = sqrt(g_x_avg.^2 + g_y_avg.^2 + g_z_avg.^2);
+    
+    magnitude = mean(g_magnitude_avg);
+    magnitude_label = sprintf('Magnitude: %.3g', magnitude);
+    %{
+    magnitude_analysis = mean(g_magnitude_avg(start_idx:end_idx));
+    magnitude_analysis_label = sprintf('Magnitude: %.3g', magnitude_analysis);
+    %}
+
+    figure;
+    hold on;
+    plot(time_in_hours, g_magnitude_avg, 'b', 'DisplayName', magnitude_label);
+    %{
+    plot(time_in_hours(start_idx:end_idx), g_magnitude_avg(start_idx:end_idx), ...
+        'r', 'LineWidth', 1.5, 'DisplayName', magnitude_analysis_label);
+    xline(time_in_hours(start_idx), 'r--', 'LineWidth', 1, 'HandleVisibility', 'off');
+    xline(time_in_hours(end_idx), 'r--', 'LineWidth', 1, 'HandleVisibility', 'off');
+    %}
+    title("Time-Averaged Gravitational Acceleration", 'FontWeight', 'normal');
+    xlabel("Time (h)");
+    ylabel("Acceleration (g)");
+    legend('show');
+
+    figure;
+    plot(time_in_hours, g_x_avg, 'm', ...
+         time_in_hours, g_y_avg, 'g', ...
+         time_in_hours, g_z_avg, 'k');
+    title("Time-Averaged Gravitational Acceleration", 'FontWeight', 'normal');
+    xlabel("Time (h)");
+    ylabel("Acceleration (g)");
+    legend("X", "Y", "Z");
+
+    a_x_avg = cumsum(a_local_2(1,:)) ./ (1:length(a_local_2(1,:)));
+    a_y_avg = cumsum(a_local_2(2,:)) ./ (1:length(a_local_2(2,:)));
+    a_z_avg = cumsum(a_local_2(3,:)) ./ (1:length(a_local_2(3,:)));
+    a_magnitude_avg = sqrt(a_x_avg.^2 + a_y_avg.^2 + a_z_avg.^2);
+
+    magnitude = mean(a_magnitude_avg);
+    magnitude_label = sprintf('Magnitude: %.3g', magnitude);
+    %{
+    magnitude_analysis = mean(a_magnitude_avg(start_idx:end_idx));
+    magnitude_analysis_label = sprintf('Magnitude: %.3g', magnitude_analysis);
+    %}
+
+    figure;
+    hold on;
+    plot(time_in_hours, a_magnitude_avg, 'b', 'DisplayName', magnitude_label);
+    %{
+    plot(time_in_hours(start_idx:end_idx), a_magnitude_avg(start_idx:end_idx), ...
+        'r', 'LineWidth', 1.5, 'DisplayName', magnitude_analysis_label);
+    xline(time_in_hours(start_idx), 'r--', 'LineWidth', 1, 'HandleVisibility', 'off');
+    xline(time_in_hours(end_idx), 'r--', 'LineWidth', 1, 'HandleVisibility', 'off');
+    %}
+    title("Time-Averaged Non-Gravitational Acceleration", 'FontWeight', 'normal');
+    xlabel("Time (h)");
+    ylabel("Acceleration (g)");
+    legend('show');
+
+    figure;
+    plot(time_in_hours, a_x_avg, 'm', ...
+         time_in_hours, a_y_avg, 'g', ...
+         time_in_hours, a_z_avg, 'k');
+    title("Time-Averaged Non-Gravitational Acceleration", 'FontWeight', 'normal');
+    xlabel("Time (h)");
+    ylabel("Acceleration (g)");
+    legend("X", "Y", "Z");
+
+    distribution = FibonacciLattice("theoretical", a_tot_local_2(1,:), a_tot_local_2(2,:), a_tot_local_2(3,:)).getDistribution();
+    distribution_label = sprintf('Distribution: %d', distribution);
+
+    figure;
+    hold on;
+    [u, v] = meshgrid(linspace(0, 2*pi, 25), linspace(0, pi, 25));
+    x = cos(u) .* sin(v);
+    y = sin(u) .* sin(v);
+    z = cos(v);
+    mesh(x, y, z, 'EdgeColor', [0.5 0.5 0.5], 'FaceAlpha', 0, ...
+         'EdgeAlpha', 0.5, 'HandleVisibility', 'off');
+    plot3(a_tot_local_2(1,:), a_tot_local_2(2,:), a_tot_local_2(3,:), 'b', 'DisplayName', distribution_label);
+    title("Orientation Distribution", 'FontWeight', 'normal');
+    xlabel('X (g)');
+    ylabel('Y (g)');
+    zlabel('Z (g)');
+    legend('show');
+    xticks([-1 -0.5 0 0.5 1]);
+    yticks([-1 -0.5 0 0.5 1]);
+    zticks([-1 -0.5 0 0.5 1]);
+    grid off;
+    view(3);
+    xlim([-1 1]);
+    ylim([-1 1]);
+    zlim([-1 1]);
+    axis equal;
+    hold off;
+
+    subset_x = a_tot_local_2(1, start_idx:end_idx);
+    subset_y = a_tot_local_2(2, start_idx:end_idx);
+    subset_z = a_tot_local_2(3, start_idx:end_idx);
+    
+    distribution_analysis = FibonacciLattice("theoretical", subset_x, subset_y, subset_z).getDistribution();
+    distribution_analysis_label = sprintf('Distribution: %d', distribution_analysis);
+
+    figure;
+    hold on;
+    title("Orientation Distribution", 'FontWeight', 'normal');
+    xlabel('X (g)');
+    ylabel('Y (g)');
+    zlabel('Z (g)');
+    legend('show');
+    xticks([-1 -0.5 0 0.5 1]);
+    yticks([-1 -0.5 0 0.5 1]);
+    zticks([-1 -0.5 0 0.5 1]);
+    grid off;
+    view(3);
+    xlim([-1 1]);
+    ylim([-1 1]);
+    zlim([-1 1]);
+    axis equal;
+    [u, v] = meshgrid(linspace(0, 2*pi, 25), linspace(0, pi, 25));
+    x = cos(u) .* sin(v);
+    y = sin(u) .* sin(v);
+    z = cos(v);
+    mesh(x, y, z, 'EdgeColor', [0.5 0.5 0.5], ...
+         'FaceAlpha', 0, 'EdgeAlpha', 0.5, 'HandleVisibility', 'off');
+    animated_line = plot3(NaN, NaN, NaN, 'r', 'LineWidth', 1, ...
+                          'DisplayName', distribution_analysis_label);
+    for k = 1:5:length(subset_x)
+        set(animated_line, 'XData', subset_x(1:k), ...
+                           'YData', subset_y(1:k), ...
+                           'ZData', subset_z(1:k));
+        drawnow;
+    end
+    hold off;
+end
