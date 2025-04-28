@@ -4,7 +4,7 @@ function theoretical_plots()
     set(0, 'DefaultAxesFontWeight', 'normal');
     set(0, 'DefaultTextFontWeight', 'normal');
 
-    f = 500; % hz
+    f = 750; % hz
     angular_velocity_min = 10; % rpm
     angular_velocity_max = 20; % rpm
     outer_initial_angular_position = 0; % deg
@@ -22,8 +22,8 @@ function theoretical_plots()
     omega_beta_rpm = omega_beta * 30 / pi;
 
     figure;
-    plot(time_in_hours, omega_alpha_rpm, ...
-         time_in_hours, omega_beta_rpm);
+    plot(time_array, omega_alpha_rpm, ...
+         time_array, omega_beta_rpm);
     title("Angular Velocity vs. Time", 'FontWeight', 'normal');
     xlabel("Time (h)");
     ylabel("Angular Velocity (rpm)");
@@ -131,7 +131,7 @@ function theoretical_plots()
          'FaceAlpha', 0, 'EdgeAlpha', 0.5, 'HandleVisibility', 'off');
     animated_line = plot3(NaN, NaN, NaN, 'r', 'LineWidth', 1, ...
                           'DisplayName', distribution_label);
-    for k = 1:25:length(a_tot_local_2)
+    for k = 1:50:length(a_tot_local_2)
         set(animated_line, 'XData', a_tot_local_2(1,1:k), ...
                            'YData', a_tot_local_2(2,1:k), ...
                            'ZData', a_tot_local_2(3,1:k));
