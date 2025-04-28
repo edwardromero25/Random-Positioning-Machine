@@ -7,12 +7,14 @@ function theoretical_plots()
     f = 750; % hz
     angular_velocity_min = 10; % rpm
     angular_velocity_max = 20; % rpm
+    transition_time = 1; % s
+    hold_time = 4; % s
     outer_initial_angular_position = 0; % deg
     inner_initial_angular_position = 0; % deg
     distance_from_center = 0; % cm
     simulation_duration = 0.1; % h
 
-    model = KinematicsModel(f, angular_velocity_min, angular_velocity_max, ...
+    model = KinematicsModel(f, angular_velocity_min, angular_velocity_max, transition_time, hold_time, ...
         outer_initial_angular_position, inner_initial_angular_position, ...
         distance_from_center, distance_from_center, distance_from_center, simulation_duration);
     [time_array, omega_alpha, omega_beta, g_local_2, a_local_2, a_tot_local_2] = model.calculate_acceleration();
