@@ -61,10 +61,6 @@ classdef KinematicsModel
             rad = rpm * pi / 30;
         end
 
-        function rad = deg_to_rad(~, degrees)
-            rad = deg2rad(degrees);
-        end
-
         function [time_array, omega_alpha, omega_beta, g_local_2, a_local_2, a_tot_local_2] = calculate_acceleration(obj)
             dt = 1 / obj.f_hz;
             time_array = 0:dt:(obj.duration_hours * 3600);
@@ -72,8 +68,8 @@ classdef KinematicsModel
             omega_alpha = obj.rpm_to_rad_sec(obj.generate_random_positioning_machine_profile());
             omega_beta = obj.rpm_to_rad_sec(obj.generate_random_positioning_machine_profile());
 
-            alpha_0 = obj.deg_to_rad(obj.alpha_0_deg);
-            beta_0 = obj.deg_to_rad(obj.beta_0_deg);
+            alpha_0 = deg2rad(obj.alpha_0_deg);
+            beta_0 = deg2rad(obj.beta_0_deg);
 
             alpha_t = omega_alpha .* time_array + alpha_0;
             beta_t = omega_beta .* time_array + beta_0;
