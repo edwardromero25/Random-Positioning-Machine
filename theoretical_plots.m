@@ -1,8 +1,5 @@
 function theoretical_plots()
     set(0, 'DefaultAxesFontName', 'Raleway');
-    set(0, 'DefaultTextFontName', 'Raleway');
-    set(0, 'DefaultAxesFontWeight', 'normal');
-    set(0, 'DefaultTextFontWeight', 'normal');
 
     sampling_rate = 750; % hz
     angular_velocity_min = 10; % rpm
@@ -20,6 +17,7 @@ function theoretical_plots()
     [time_array, omega_alpha, omega_beta, g_local_2, a_local_2, a_tot_local_2] = model.calculate_acceleration();
     time_in_hours = time_array / 3600;
     
+    %% Angular Velocity
     omega_alpha_rpm = omega_alpha * 30 / pi;
     omega_beta_rpm = omega_beta * 30 / pi;
 
@@ -30,7 +28,8 @@ function theoretical_plots()
     xlabel("Time (h)");
     ylabel("Angular Velocity (rpm)");
     legend("Outer", "Inner");
-
+    
+    %% Gravitational Acceleration
     g_x_avg = cumsum(g_local_2(1,:)) ./ (1:length(g_local_2(1,:)));
     g_y_avg = cumsum(g_local_2(2,:)) ./ (1:length(g_local_2(2,:)));
     g_z_avg = cumsum(g_local_2(3,:)) ./ (1:length(g_local_2(3,:)));
@@ -55,7 +54,8 @@ function theoretical_plots()
     xlabel("Time (h)");
     ylabel("Acceleration (g)");
     legend("X", "Y", "Z");
-
+    
+    %% Non-Gravitational Acceleration
     a_x_avg = cumsum(a_local_2(1,:)) ./ (1:length(a_local_2(1,:)));
     a_y_avg = cumsum(a_local_2(2,:)) ./ (1:length(a_local_2(2,:)));
     a_z_avg = cumsum(a_local_2(3,:)) ./ (1:length(a_local_2(3,:)));
@@ -81,6 +81,7 @@ function theoretical_plots()
     ylabel("Acceleration (g)");
     legend("X", "Y", "Z");
 
+    %% Orientation Distribution
     distribution = FibonacciLattice("theoretical", a_tot_local_2(1,:), a_tot_local_2(2,:), a_tot_local_2(3,:)).getDistribution();
     distribution_label = sprintf('Distribution: %d', distribution);
 
